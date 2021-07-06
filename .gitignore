@@ -1,5 +1,6 @@
 # Compiled class file
 *.class
+bin/
 
 # Log file
 *.log
@@ -9,6 +10,10 @@
 
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
+
+# Library files
+lib/spigot-api-1.14.4-R0.1-SNAPSHOT.jar
+lib/hklib_1.0.1.jar
 
 # Package Files #
 *.jar

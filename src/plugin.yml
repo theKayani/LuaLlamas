@@ -1,0 +1,9 @@
+name: LuaLlamas
+main: com.hk.spigot.LuaLlamas
+version: 1.0
+api-version: 1.14
+commands:
+   lua:
+      description: Run some lua code...
+      usage: /lua <code>
+      permission: com.hk.spigot.luacommand
