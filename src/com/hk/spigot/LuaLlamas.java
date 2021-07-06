@@ -232,7 +232,7 @@ public class LuaLlamas extends JavaPlugin implements Listener
 			
 					interp.importLib(LuaLibrary.JSON);
 					interp.importLib(LuaLibrary.HASH);
-					interp.importLib(LuaLibrary.DATE);
+//					interp.importLib(LuaLibrary.DATE);
 					interp.importLib(WorldLibrary.INS);
 					
 					Environment env = interp.getGlobals();

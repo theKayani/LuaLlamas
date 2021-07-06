@@ -60,6 +60,7 @@ public class LlamaController extends BukkitRunnable
 			interp = Lua.interpreter();
 			interp.setExtra("llama", llama);
 			interp.setExtra("owner", owner);
+			interp.setExtra("player", owner);
 			interp.setExtra("world", world);
 			
 			interp.importLib(LuaLibrary.BASIC);
@@ -72,7 +73,7 @@ public class LlamaController extends BukkitRunnable
 	
 			interp.importLib(LuaLibrary.JSON);
 			interp.importLib(LuaLibrary.HASH);
-			interp.importLib(LuaLibrary.DATE);
+//			interp.importLib(LuaLibrary.DATE);
 			interp.importLib(WorldLibrary.INS);
 			
 			Environment env = interp.getGlobals();
