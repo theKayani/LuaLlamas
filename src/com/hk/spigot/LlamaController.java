@@ -17,6 +17,7 @@ import com.hk.lua.LuaLibrary;
 import com.hk.lua.LuaObject;
 import com.hk.spigot.lua.LlamaUserdata;
 import com.hk.spigot.lua.PlayerUserdata;
+import com.hk.spigot.lua.PotionLibrary;
 import com.hk.spigot.lua.WorldLibrary;
 
 public class LlamaController extends BukkitRunnable
@@ -52,7 +53,7 @@ public class LlamaController extends BukkitRunnable
 	{
 		if(llama.isDead() || !llama.isValid())
 			cancel();
-		
+
 		ticks++;
 
 		if(interp == null)
@@ -73,8 +74,9 @@ public class LlamaController extends BukkitRunnable
 	
 			interp.importLib(LuaLibrary.JSON);
 			interp.importLib(LuaLibrary.HASH);
-//			interp.importLib(LuaLibrary.DATE);
+			interp.importLib(LuaLibrary.DATE);
 			interp.importLib(WorldLibrary.INS);
+			interp.importLib(PotionLibrary.INS);
 			
 			Environment env = interp.getGlobals();
 			
@@ -93,7 +95,6 @@ public class LlamaController extends BukkitRunnable
 			env.setVar("Blocks", blocks);
 			
 			env.setVar("owner", new PlayerUserdata(owner));
-//			env.setVar("world", new WorldUserdata(world));
 			env.setVar("llama", new LlamaUserdata(llama));
 			
 			env.setVar("print", Lua.newFunc((interp2, args) -> {
@@ -132,7 +133,7 @@ public class LlamaController extends BukkitRunnable
 						if(LuaLlamas.CARPETS[i] == type)
 							return Lua.newNumber(i);
 					}
-					
+
 					return Lua.nil();
 				}
 			}));

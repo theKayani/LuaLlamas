@@ -8,21 +8,18 @@ import com.hk.lua.Lua;
 import com.hk.lua.LuaException;
 import com.hk.lua.LuaInterpreter;
 import com.hk.lua.LuaObject;
-import com.hk.lua.LuaUserdata;
 
-public class PlayerUserdata extends LuaUserdata
+public class PlayerUserdata extends EntityUserdata
 {
 	private final Player player;
 
 	public PlayerUserdata(Player player)
 	{
-		this.player = player;
-	}
+		super(player);
 
-	@Override
-	public String getString(LuaInterpreter interp)
-	{
-		return "Player[" + player.getName() + "]";
+		this.player = player;
+		
+		metatable = playerMetatable;
 	}
 	
 	@Override
@@ -32,14 +29,6 @@ public class PlayerUserdata extends LuaUserdata
 		{
 			switch(key.getString())
 			{
-			case "health":
-				return Lua.newNumber(player.getHealth());
-			case "posX":
-				return Lua.newNumber(player.getLocation().getX());
-			case "posY":
-				return Lua.newNumber(player.getLocation().getY());
-			case "posZ":
-				return Lua.newNumber(player.getLocation().getZ());
 			case "xp":
 				return Lua.newNumber(player.getExp());
 			case "heldItem":
@@ -60,18 +49,6 @@ public class PlayerUserdata extends LuaUserdata
 		{
 			switch(key.getString())
 			{
-			case "health":
-				player.setHealth(value.getFloat());
-				return;
-			case "posX":
-				player.getLocation().setX(value.getFloat());
-				return;
-			case "posY":
-				player.getLocation().setY(value.getFloat());
-				return;
-			case "posZ":
-				player.getLocation().setZ(value.getFloat());
-				return;
 			case "xp":
 				player.setExp((float) value.getFloat());
 				return;
@@ -91,7 +68,7 @@ public class PlayerUserdata extends LuaUserdata
 	@Override
 	public String name()
 	{
-		return "*PLAYER";
+		return "PLAYER*";
 	}
 
 	@Override
@@ -99,4 +76,16 @@ public class PlayerUserdata extends LuaUserdata
 	{
 		return player;
 	}
+	
+	public static LuaObject metatable()
+	{
+		LuaObject tbl = EntityUserdata.metatable();
+		tbl.rawSet("__name", "PLAYER*");
+		
+		tbl.rawSet("whutUp", Lua.newString("test one two three"));
+		
+		return tbl;
+	}
+	
+	private static final LuaObject playerMetatable = metatable();
 }

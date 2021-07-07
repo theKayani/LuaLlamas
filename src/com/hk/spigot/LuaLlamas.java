@@ -3,6 +3,7 @@ package com.hk.spigot;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -34,6 +35,7 @@ import com.hk.lua.LuaLibrary;
 import com.hk.lua.LuaObject;
 import com.hk.math.Rand;
 import com.hk.spigot.lua.PlayerUserdata;
+import com.hk.spigot.lua.PotionLibrary;
 import com.hk.spigot.lua.WorldLibrary;
 
 public class LuaLlamas extends JavaPlugin implements Listener
@@ -182,8 +184,8 @@ public class LuaLlamas extends JavaPlugin implements Listener
 										llama.setCarryingChest(true);
 										llama.setOwner(player);
 										llama.setStrength(5);
-//										llama.setAI(false);
-										llama.setAdult();										
+										llama.setAI(false);
+										llama.setAdult();
 										llama.getInventory().setContents(llamaInv);
 										llama.setCustomName(player.getDisplayName() + "'s Nether Llama");
 										
@@ -232,8 +234,9 @@ public class LuaLlamas extends JavaPlugin implements Listener
 			
 					interp.importLib(LuaLibrary.JSON);
 					interp.importLib(LuaLibrary.HASH);
-//					interp.importLib(LuaLibrary.DATE);
+					interp.importLib(LuaLibrary.DATE);
 					interp.importLib(WorldLibrary.INS);
+					interp.importLib(PotionLibrary.INS);
 					
 					Environment env = interp.getGlobals();
 					
@@ -247,7 +250,7 @@ public class LuaLlamas extends JavaPlugin implements Listener
 					}));
 					
 					for(String page : meta.getPages())
-						interp.require(page);
+						interp.require(ChatColor.stripColor(page));
 				}
 				
 				return true;
