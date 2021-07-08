@@ -10,7 +10,7 @@ import com.hk.lua.LuaUserdata;
 
 public class ItemStackUserdata extends LuaUserdata
 {
-	private final ItemStack stack;
+	public final ItemStack stack;
 	
 	public ItemStackUserdata(ItemStack stack)
 	{
@@ -34,6 +34,19 @@ public class ItemStackUserdata extends LuaUserdata
 		
 		return new ItemStackUserdata(data.stack.clone());
 	}
+
+//	private static LuaObject getEnchantments(LuaInterpreter interp, LuaObject[] args)
+//	{
+//		if(!(args[0] instanceof ItemStackUserdata))
+//			throw new LuaException("bad argument #1 to 'getEnchantments' (ITEMSTACK* expected)");
+//
+//		ItemStackUserdata data = (ItemStackUserdata) args[0];
+//
+//		for(Map.Entry<Enchantment, Integer> ent : data.stack.getEnchantments().entrySet())
+//		{
+//			
+//		}
+//	}
 	
 	@Override
 	public LuaObject doIndex(LuaInterpreter interp, LuaObject key)

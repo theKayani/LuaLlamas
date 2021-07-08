@@ -1,25 +1,36 @@
-package com.hk.spigot.lua;
+package com.hk.spigot.lua.entity;
 
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 
 import com.hk.lua.Lua;
 import com.hk.lua.LuaException;
 import com.hk.lua.LuaInterpreter;
 import com.hk.lua.LuaObject;
+import com.hk.spigot.lua.ItemStackUserdata;
 
-public class PlayerUserdata extends EntityUserdata
+public class PlayerUserdata extends LivingEntityUserdata
 {
-	private final Player player;
+	public final Player player;
 
-	public PlayerUserdata(Player player)
+	protected PlayerUserdata(Player player)
 	{
 		super(player);
 
 		this.player = player;
 		
 		metatable = playerMetatable;
+	}
+	
+	private static LuaObject sendMessage(LuaInterpreter interp, LuaObject[] args)
+	{
+		if(!(args[0] instanceof PlayerUserdata))
+			throw new LuaException("bad argument #1 to 'sendMessage' (PLAYER* expected)");
+
+		PlayerUserdata data = (PlayerUserdata) args[0];
+
+		data.player.sendMessage(args[0].getString());
+		
+		return Lua.nil();
 	}
 	
 	@Override
@@ -32,7 +43,7 @@ public class PlayerUserdata extends EntityUserdata
 			case "xp":
 				return Lua.newNumber(player.getExp());
 			case "heldItem":
-				return Lua.newString(player.getInventory().getItemInMainHand().getType().name());
+				return new ItemStackUserdata(player.getInventory().getItemInMainHand());
 			case "flying":
 				return Lua.newBoolean(player.isFlying());
 			case "name":
@@ -53,7 +64,9 @@ public class PlayerUserdata extends EntityUserdata
 				player.setExp((float) value.getFloat());
 				return;
 			case "heldItem":
-				player.getInventory().setItemInMainHand(new ItemStack(Material.valueOf(value.getString())));
+				if(!(value instanceof ItemStackUserdata))
+					throw new LuaException("Expected heldItem to be of type ITEMSTACK*");
+				player.getInventory().setItemInMainHand(((ItemStackUserdata) value).stack);
 				return;
 			case "flying":
 				player.setFlying(value.getBoolean());
@@ -79,10 +92,10 @@ public class PlayerUserdata extends EntityUserdata
 	
 	public static LuaObject metatable()
 	{
-		LuaObject tbl = EntityUserdata.metatable();
+		LuaObject tbl = LivingEntityUserdata.metatable();
 		tbl.rawSet("__name", "PLAYER*");
 		
-		tbl.rawSet("whutUp", Lua.newString("test one two three"));
+		tbl.rawSet("sendMessage", Lua.newFunc(PlayerUserdata::sendMessage));
 		
 		return tbl;
 	}

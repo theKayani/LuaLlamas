@@ -12,13 +12,14 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import com.hk.lua.Environment;
 import com.hk.lua.Lua;
+import com.hk.lua.LuaException;
 import com.hk.lua.LuaInterpreter;
 import com.hk.lua.LuaLibrary;
 import com.hk.lua.LuaObject;
-import com.hk.spigot.lua.LlamaUserdata;
-import com.hk.spigot.lua.PlayerUserdata;
 import com.hk.spigot.lua.PotionLibrary;
+import com.hk.spigot.lua.StackLibrary;
 import com.hk.spigot.lua.WorldLibrary;
+import com.hk.spigot.lua.entity.EntityUserdata;
 
 public class LlamaController extends BukkitRunnable
 {
@@ -45,7 +46,17 @@ public class LlamaController extends BukkitRunnable
 		LuaObject func = interp.getGlobals().getVar("trigger");
 
 		if(func.isFunction())
-			func.callFunction(interp, i);
+		{
+			try
+			{
+				func.callFunction(interp, i);
+			}
+			catch(LuaException ex)
+			{
+				owner.sendMessage(ChatColor.RED + ex.getLocalizedMessage() + ChatColor.RESET);
+				cancel();
+			}
+		}
 	}
 	
 	@Override
@@ -63,20 +74,12 @@ public class LlamaController extends BukkitRunnable
 			interp.setExtra("owner", owner);
 			interp.setExtra("player", owner);
 			interp.setExtra("world", world);
-			
-			interp.importLib(LuaLibrary.BASIC);
-			interp.importLib(LuaLibrary.COROUTINE);
-			interp.importLib(LuaLibrary.STRING);
-			interp.importLib(LuaLibrary.TABLE);
-			interp.importLib(LuaLibrary.MATH);
-			interp.importLib(LuaLibrary.IO);
-			interp.importLib(LuaLibrary.OS);
-	
-			interp.importLib(LuaLibrary.JSON);
-			interp.importLib(LuaLibrary.HASH);
-			interp.importLib(LuaLibrary.DATE);
+
+			LuaLibrary.importStandard(interp);
+
 			interp.importLib(WorldLibrary.INS);
 			interp.importLib(PotionLibrary.INS);
+			interp.importLib(StackLibrary.INS);
 			
 			Environment env = interp.getGlobals();
 			
@@ -94,8 +97,8 @@ public class LlamaController extends BukkitRunnable
 			env.setVar("Items", items);
 			env.setVar("Blocks", blocks);
 			
-			env.setVar("owner", new PlayerUserdata(owner));
-			env.setVar("llama", new LlamaUserdata(llama));
+			env.setVar("owner", EntityUserdata.get(owner));
+			env.setVar("llama", EntityUserdata.get(llama));
 			
 			env.setVar("print", Lua.newFunc((interp2, args) -> {
 				for(LuaObject arg : args)
@@ -138,15 +141,35 @@ public class LlamaController extends BukkitRunnable
 				}
 			}));
 
-			for(String file : files)
-				interp.require(ChatColor.stripColor(file));
+			try
+			{
+				for(String file : files)
+					interp.require(ChatColor.stripColor(file));
+			}
+			catch(LuaException ex)
+			{
+				owner.sendMessage(ChatColor.RED + ex.getLocalizedMessage() + ChatColor.RESET);
+				cancel();
+			}
+			
+			ticks -= 2;
 		}
 		else
 		{
 			LuaObject func = interp.getGlobals().getVar("tick");
 
 			if(func.isFunction())
-				func.callFunction(interp, ticks);
+			{
+				try
+				{
+					func.callFunction(interp, ticks);
+				}
+				catch(LuaException ex)
+				{
+					owner.sendMessage(ChatColor.RED + ex.getLocalizedMessage() + ChatColor.RESET);
+					cancel();
+				}
+			}
 		}
 	}
 }

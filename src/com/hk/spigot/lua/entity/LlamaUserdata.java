@@ -1,6 +1,5 @@
-package com.hk.spigot.lua;
+package com.hk.spigot.lua.entity;
 
-import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Llama;
 
 import com.hk.lua.Lua;
@@ -8,45 +7,16 @@ import com.hk.lua.LuaException;
 import com.hk.lua.LuaInterpreter;
 import com.hk.lua.LuaObject;
 
-public class LlamaUserdata extends EntityUserdata
+public class LlamaUserdata extends LivingEntityUserdata
 {
-	private final Llama llama;
+	public final Llama llama;
 	
-	public LlamaUserdata(Llama llama)
+	protected LlamaUserdata(Llama llama)
 	{
 		super(llama);
 		this.llama = llama;
 		
 		metatable = llamaMetatable;
-	}
-	
-	private static LuaObject getTarget(LuaInterpreter interp, LuaObject[] args)
-	{
-		if(!(args[0] instanceof LlamaUserdata))
-			throw new LuaException("bad argument #1 to 'setTarget' (LLAMA* expected)");
-
-		LlamaUserdata data = (LlamaUserdata) args[0];
-		LivingEntity target = data.llama.getTarget();
-
-		if(target != null)
-			return new EntityUserdata(target);
-		else
-			return Lua.nil();
-	}
-	
-	private static LuaObject setTarget(LuaInterpreter interp, LuaObject[] args)
-	{
-		if(!(args[0] instanceof LlamaUserdata))
-			throw new LuaException("bad argument #1 to 'setTarget' (LLAMA* expected)");
-		if(!(args[1] instanceof EntityUserdata))
-			throw new LuaException("bad argument #2 to 'setTarget' (ENTITY* expected)");
-
-		LlamaUserdata data = (LlamaUserdata) args[0];
-		EntityUserdata target = (EntityUserdata) args[1];
-
-		data.llama.setTarget(target.entity);
-
-		return Lua.nil();
 	}
 
 	@Override
@@ -134,11 +104,8 @@ public class LlamaUserdata extends EntityUserdata
 	
 	public static LuaObject metatable()
 	{
-		LuaObject tbl = EntityUserdata.metatable();
+		LuaObject tbl = LivingEntityUserdata.metatable();
 		tbl.rawSet("__name", "LLAMA*");
-
-		tbl.rawSet("getTarget", Lua.newFunc(LlamaUserdata::getTarget));
-		tbl.rawSet("setTarget", Lua.newFunc(LlamaUserdata::setTarget));
 		
 		return tbl;
 	}

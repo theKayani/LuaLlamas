@@ -17,12 +17,6 @@ public enum PotionLibrary implements BiConsumer<Environment, LuaObject>, LuaMeth
 {
 	types() {
 		@Override
-		public LuaObject call(LuaInterpreter interp, LuaObject[] args)
-		{
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
 		public void accept(Environment env, LuaObject table)
 		{
 			PotionEffectType[] types = PotionEffectType.values();
@@ -56,6 +50,12 @@ public enum PotionLibrary implements BiConsumer<Environment, LuaObject>, LuaMeth
 			return tbl;
 		}
 	};
+
+	@Override
+	public LuaObject call(LuaInterpreter interp, LuaObject[] args)
+	{
+		throw new UnsupportedOperationException();
+	}
 
 	@Override
 	public void accept(Environment env, LuaObject table)

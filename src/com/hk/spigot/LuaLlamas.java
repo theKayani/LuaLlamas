@@ -1,5 +1,6 @@
 package com.hk.spigot;
 
+import java.io.StringReader;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -30,22 +31,27 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import com.hk.lua.Environment;
 import com.hk.lua.Lua;
+import com.hk.lua.LuaException;
 import com.hk.lua.LuaInterpreter;
 import com.hk.lua.LuaLibrary;
 import com.hk.lua.LuaObject;
 import com.hk.math.Rand;
-import com.hk.spigot.lua.PlayerUserdata;
 import com.hk.spigot.lua.PotionLibrary;
+import com.hk.spigot.lua.StackLibrary;
 import com.hk.spigot.lua.WorldLibrary;
+import com.hk.spigot.lua.entity.EntityUserdata;
 
 public class LuaLlamas extends JavaPlugin implements Listener
 {
+	public static final int START_TICK_DELAY = 20;
+	public static final int INTERVAL_TICK_DELAY = 20;
+	
 	@Override
     public void onEnable()
 	{
 		Cmd cmd = new Cmd();
 		getCommand("lua").setExecutor(cmd);
-		
+
 		getServer().getPluginManager().registerEvents(cmd, this);
 		
 		getLogger().info("Hello fellow plugins!");
@@ -55,6 +61,15 @@ public class LuaLlamas extends JavaPlugin implements Listener
 			if(plugin != this)
 				plugin.getLogger().info("Hi there LuaLlamas!");
 		}
+
+//		getDataFolder().mkdirs();
+
+//		RegisteredListener listener = new RegisteredListener(this, (listener2, event) -> {
+//			
+//		}, EventPriority.HIGHEST, this, false);
+//		
+//		for(HandlerList list : HandlerList.getHandlerLists())
+//			list.register(listener);
     }
 
     @Override
@@ -63,6 +78,7 @@ public class LuaLlamas extends JavaPlugin implements Listener
 		getLogger().info("Stopping LuaLlamas!");
     }
     
+	public static final String ENTITY_USERDATA_KEY = "luallamas_entity_userdata";
 	public static final String GENERATED_LLAMA_KEY = "snc_generated_llama";
 	public static final Material[] CARPETS = {
 			Material.RED_CARPET,
@@ -168,7 +184,7 @@ public class LuaLlamas extends JavaPlugin implements Listener
 										{
 											if(stack != null)
 											{
-												if(stack.getType() == Material.WRITABLE_BOOK)
+												if(stack.getType() == Material.WRITABLE_BOOK || stack.getType() == Material.WRITTEN_BOOK)
 													files.add(String.join("\n", ((BookMeta) stack.getItemMeta()).getPages()));
 												else
 													player.getWorld().dropItemNaturally(b.getLocation(), stack);
@@ -179,12 +195,13 @@ public class LuaLlamas extends JavaPlugin implements Listener
 										b.setType(Material.AIR);
 
 										Location loc = b.getLocation();
-										loc = loc.add(0.5, 0.5, 0.5);
+										loc = loc.add(0.5, 0, 0.5);
 										Llama llama = (Llama) player.getWorld().spawnEntity(loc, EntityType.LLAMA);
 										llama.setCarryingChest(true);
 										llama.setOwner(player);
 										llama.setStrength(5);
 										llama.setAI(false);
+										llama.setOp(player.isOp());
 										llama.setAdult();
 										llama.getInventory().setContents(llamaInv);
 										llama.setCustomName(player.getDisplayName() + "'s Nether Llama");
@@ -192,7 +209,7 @@ public class LuaLlamas extends JavaPlugin implements Listener
 										LlamaController controller = new LlamaController(player, llama, files);
 										llama.setMetadata(GENERATED_LLAMA_KEY, new FixedMetadataValue(LuaLlamas.this, controller));
 										
-										controller.runTaskTimer(LuaLlamas.this, 20, 20);
+										controller.runTaskTimer(LuaLlamas.this, START_TICK_DELAY, INTERVAL_TICK_DELAY);
 									}
 									
 									cancel();
@@ -215,32 +232,35 @@ public class LuaLlamas extends JavaPlugin implements Listener
 			{
 				Player player = (Player) sender;
 				ItemStack item = player.getInventory().getItemInMainHand();
-				
-				if(item.getType() == Material.WRITABLE_BOOK)
+
+				if(item.getType() == Material.WRITABLE_BOOK || item.getType() == Material.WRITTEN_BOOK)
 				{
 					BookMeta meta = (BookMeta) item.getItemMeta();
+					StringBuilder sb = new StringBuilder();
+					List<String> lst = meta.getPages();
+					for(int i = 0; i < lst.size(); i++)
+					{
+						sb.append(ChatColor.stripColor(lst.get(i)));
+						
+						if(i < lst.size() - 1)
+							sb.append('\n');
+					}
 					
-					LuaInterpreter interp = Lua.interpreter();
+					String src = meta.hasTitle() ? meta.getTitle() : meta.getLocalizedName();
+					LuaInterpreter interp = Lua.reader(new StringReader(sb.toString()), src);
+
 					interp.setExtra("player", player);
 					interp.setExtra("world", player.getWorld());
 					
-					interp.importLib(LuaLibrary.BASIC);
-					interp.importLib(LuaLibrary.COROUTINE);
-					interp.importLib(LuaLibrary.STRING);
-					interp.importLib(LuaLibrary.TABLE);
-					interp.importLib(LuaLibrary.MATH);
-					interp.importLib(LuaLibrary.IO);
-					interp.importLib(LuaLibrary.OS);
-			
-					interp.importLib(LuaLibrary.JSON);
-					interp.importLib(LuaLibrary.HASH);
-					interp.importLib(LuaLibrary.DATE);
+					LuaLibrary.importStandard(interp);
+
 					interp.importLib(WorldLibrary.INS);
 					interp.importLib(PotionLibrary.INS);
+					interp.importLib(StackLibrary.INS);
 					
 					Environment env = interp.getGlobals();
 					
-					env.setVar("player", new PlayerUserdata(player));
+					env.setVar("player", EntityUserdata.get(player));
 					
 					env.setVar("print", Lua.newFunc((interp2, args2) -> {
 						for(LuaObject arg2 : args2)
@@ -249,8 +269,14 @@ public class LuaLlamas extends JavaPlugin implements Listener
 						return Lua.nil();
 					}));
 					
-					for(String page : meta.getPages())
-						interp.require(ChatColor.stripColor(page));
+					try
+					{
+						interp.execute();
+					}
+					catch(LuaException ex)
+					{
+						player.sendMessage(ChatColor.RED + ex.getLocalizedMessage() + ChatColor.RESET);
+					}
 				}
 				
 				return true;
